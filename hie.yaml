@@ -1,0 +1,11 @@
+cradle:
+    multi:
+      - path: ./src
+        config:
+          cradle:
+            cabal:
+              component: "exe:bachelor-thesis"
+      - path: ./Setup.hs
+        config:
+          cradle:
+            none:
