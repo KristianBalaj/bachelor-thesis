@@ -19,5 +19,9 @@ instance FromJSON Codons
 parseCodons :: FilePath -> IO (Maybe Codons)
 parseCodons path = fmap decode (B.readFile path)
 
+-- main :: IO ()
+-- main = parseCodons "codons.json" >>= print
+
 main :: IO ()
-main = parseCodons "codons.json" >>= print
+main = print "A"
+
