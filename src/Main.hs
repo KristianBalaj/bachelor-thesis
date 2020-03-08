@@ -10,6 +10,7 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Char8 as B
 import qualified FastaParser as Fasta
 import Data.Maybe
+import qualified Descriptors
 
 data Codons = Codons {
     nonpolar :: [String],
@@ -65,16 +66,15 @@ codonDirection allCodons codon =
 calculateSeqVertices :: Vec2 -> String -> (String -> Maybe Vec2) -> [Vec2]
 calculateSeqVertices origin seq codonDirFn =
     case seq of
-        [] -> [origin]
         (a:b:c:xs) -> let codonDir = codonDirFn [a, b, c] in
                 if isNothing codonDir 
                     then calculateSeqVertices origin xs codonDirFn 
                     else origin : calculateSeqVertices (addVec2 origin (fromJust codonDir)) xs codonDirFn
         _ -> [origin]
 
--- smth = do
---     fast <- Fasta.parseFasta <$> readFile "data/assembled-ecoli/536.fasta"
---     codons <- parseCodons "codons.json"
---     return $ calculateSeqVertices (0, 0) (Fasta.fastaSeq (head $ fromJust fast)) (codonDirection $ fromJust codons)
+smth = do
+    fast <- Fasta.parseFasta <$> B.readFile "data/assembled-ecoli/536.fasta"
+    codons <- parseCodons "codons.json"
+    return $ calculateSeqVertices (0, 0) (B.unpack $ Fasta.fastaSeq (head $ fromJust fast)) (codonDirection $ fromJust codons)
 
     --  calculateSeqVertices (0, 0) (Fasta.parseFasta <$> readFile "data/assembled-ecoli/1test1.fasta")
