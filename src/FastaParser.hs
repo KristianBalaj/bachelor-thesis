@@ -1,47 +1,48 @@
-module FastaParser (parseFasta) where 
+module FastaParser (parseFasta, FastaSeq(..)) where 
 
-import Text.ParserCombinators.ReadP
-import Data.Char (isSpace)
+import qualified Data.ByteString.Char8 as B
+import Data.Attoparsec.ByteString as A
+import Data.Word8
 
 data FastaSeq = FastaSeq {
-    fastaHeader :: String,
-    fastaSeq :: String
+    fastaHeader :: B.ByteString,
+    fastaSeq :: B.ByteString
 } deriving (Show)
 
-fastaSeqStart :: (Char -> Bool)
-fastaSeqStart c = c `elem` ">;"
+fastaSeqStart :: (Word8 -> Bool)
+fastaSeqStart c = c `elem` [_semicolon, _greater]
 
-recordStart :: ReadP String
-recordStart = munch1 fastaSeqStart
+recordStart :: Parser B.ByteString
+recordStart = A.takeWhile1 fastaSeqStart
 
-word :: ReadP String
-word = munch1 $ not . isSpace
+word :: Parser B.ByteString
+word = A.takeWhile1 $ not . isSpace
 
-header :: ReadP String
+header :: Parser B.ByteString
 header = do
     _ <- recordStart
-    _ <- munch isSpace
+    _ <- A.takeWhile isSpace
     header <- word
-    _ <- munch isSpace
+    _ <- A.takeWhile isSpace
     return header
 
-fastaSequence :: ReadP [String]
-fastaSequence = (munch (\c -> not (isSpace c) && not (fastaSeqStart c))) `sepBy1` satisfy isSpace
+fastaSequence :: Parser [B.ByteString]
+fastaSequence = A.takeWhile (\c -> not (isSpace c) && not (fastaSeqStart c)) `A.sepBy1` satisfy isSpace
 
-singleFastaSeq :: ReadP FastaSeq
+singleFastaSeq :: Parser FastaSeq
 singleFastaSeq = do
     hdr <- header
-    seq <- concat <$> fastaSequence
+    seq <- B.concat <$> fastaSequence
     return (FastaSeq hdr seq)
 
-fasta :: ReadP [FastaSeq]
+fasta :: Parser [FastaSeq]
 fasta = do
-    res <- many singleFastaSeq
-    eof
+    res <- A.many' singleFastaSeq
+    A.endOfInput 
     return res
 
-parseFasta :: String -> Maybe [FastaSeq]
+parseFasta :: B.ByteString -> Maybe [FastaSeq]
 parseFasta contents = 
-    case readP_to_S fasta contents of
-        [] -> Nothing
-        ((fastas, rest):xs) -> Just fastas
+    case A.parseOnly fasta contents of
+        Left _ -> Nothing
+        Right fastas -> Just fastas
