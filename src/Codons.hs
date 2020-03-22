@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+
 module Codons where
 
 import Data.List (elemIndex)

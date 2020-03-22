@@ -1,51 +1,54 @@
 module Main where
 
-import System.Directory (getDirectoryContents)
+import Data.Maybe (fromJust, maybe)
+import System.Directory (getDirectoryContents, doesDirectoryExist)
 import System.IO
 import qualified Data.ByteString.Char8 as B
+import Data.List (isSuffixOf)
 import Data.List.Split (splitOn)
 import Control.Monad (join)
+import System.FilePath (combine)
 
 import qualified BioSequences
+import qualified Codons (parseCodons)
+import qualified Metrics
 import qualified FastaParser as Fasta
-
--- main :: IO ()
--- main = parseCodons "codons.json" >>= print
-
--- main :: IO ()
--- main = Fasta.parseFasta <$> B.readFile "data/assembled-ecoli/536.fasta" >>= print
-
--- main :: IO ()
--- main = smth >>= print
-
--- main :: IO ()
--- main = do
---     fast <- Fasta.parseFasta <$> B.readFile "data/assembled-ecoli/536.fasta"
---     print (B.unpack $ Fasta.fastaSeq (head $ fromJust fast))
+import qualified TsvSerializer
+import qualified CmdLine
 
 main :: IO ()
-main = getDirectoryContents "data/assembled-ecoli" >>= print
+main = do
+    args <- CmdLine.getCmd
+    putStrLn $ "Codons file: \"" ++ CmdLine.cmdCodonsFile args ++ "\""
+    putStrLn $ "Sequence files dir: \"" ++ CmdLine.cmdSequencesDir args ++ "\""
+    putStrLn $ "Result file: \"" ++ CmdLine.cmdResultFile args ++ "\""
+    putStrLn $ "Sequence file endings: " ++ show (CmdLine.cmdSequenceFileEndings args)
+    putStrLn "Processing..."
+    --
+    codons <- Codons.parseCodons $ CmdLine.cmdCodonsFile args
+    sequences <- allSequences args
+    let distances = BioSequences.sequencesDistances Metrics.euclideanDistance <$> sequences <*> codons
+    writeFile "result.tsv" $ fromJust $ TsvSerializer.serializeTsv <$> distances
+    --
+    putStrLn $ "Sequences count = " ++ show (length sequences)
+    putStrLn $ "Resulting distances count = " ++ show (maybe 0 length distances)
+    putStrLn "Finished"
 
-allSequences :: FilePath -> [String] -> IO (Maybe [Fasta.FastaSeq])
-allSequences directoryPath fileEndings =
+allSequences :: CmdLine.Cmd -> IO (Maybe [Fasta.FastaSeq])
+allSequences CmdLine.Cmd{CmdLine.cmdSequencesDir = dir, CmdLine.cmdSequenceFileEndings = fileEndings} =
     let
-        allFiles = getDirectoryContents directoryPath :: IO [FilePath]
         sequencesFiles = filter isCorrectFile <$> allFiles :: IO [String]
-        sequencesFilesPaths = map (directoryPath ++) <$> sequencesFilesPaths :: IO [String]
+        sequencesFilesPaths = map (combine dir) <$> sequencesFiles :: IO [String]
         filesContents = traverse B.readFile =<< sequencesFilesPaths :: IO [B.ByteString]
         parsedFiles = fmap (Fasta.parseFasta <$>) filesContents :: IO [Maybe [Fasta.FastaSeq]]
     in
         fmap join . sequence <$> parsedFiles
     where
+        allFiles :: IO [FilePath]
+        allFiles = do
+            exists <- doesDirectoryExist dir
+            if exists && not (null dir)
+                then getDirectoryContents dir 
+                else fail $ "No such directory exists (directory=\"" ++ dir ++ "\")!"
         isCorrectFile :: String -> Bool
-        isCorrectFile fileName = last (splitOn "." fileName) `elem` fileEndings
-
--- smth = do
---     fast <- Fasta.parseFasta <$> B.readFile "data/assembled-ecoli/536.fasta"
---     codons <- parseCodons "codons.json"
---     let verts = calculateSeqVertices (0, 0) (B.unpack $ Fasta.fastaSeq (head $ fromJust fast)) (codonDirection $ fromJust codons)
---     return $ length verts
-
-    -- return $ calculateSeqVertices (0, 0) (B.unpack $ Fasta.fastaSeq (head $ fromJust fast)) (codonDirection $ fromJust codons)
-
-    --  calculateSeqVertices (0, 0) (Fasta.parseFasta <$> readFile "data/assembled-ecoli/1test1.fasta")
+        isCorrectFile fileName = any (`isSuffixOf` fileName) fileEndings
