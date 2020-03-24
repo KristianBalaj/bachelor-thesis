@@ -1,22 +1,23 @@
 module BioSequences (sequencesDistances) where
 
 import Data.Maybe
-import Control.Monad (filterM)
+import Control.Monad (filterM, join)
 import qualified Data.Bifunctor (second)
 import qualified Data.ByteString.Char8 as B
+import qualified Data.HashMap.Strict as HM
 
 import qualified FastaParser as Fasta
 import Metrics (Metric)
-import Codons (Codons, codonDirection)
+import qualified Codons (Codons, CodonsLookup, codonLookup)
 import Descriptors
 import Vec2
 
 type SequenceVertices = [Vec2]
 
-sequencesDistances :: Metric -> [Fasta.FastaSeq] -> Codons -> [(String, String, Float)]
+sequencesDistances :: Metric -> [Fasta.FastaSeq] -> Codons.Codons -> [(String, String, Float)]
 sequencesDistances metric lst codons =
     let
-        sequencesPowerset = filterM (const [True, False]) $ sequenceFeaturesVectors $ allSequenceVerts lst codons
+        sequencesPowerset = filterM (const [True, False]) $ sequenceFeaturesVectors $ allSequenceVerts lst (Codons.codonLookup codons)
         sequencesPairs = filter (\x -> length x == 2) sequencesPowerset
     in
         foldr pairwiseDistance [] sequencesPairs
@@ -26,14 +27,14 @@ sequencesDistances metric lst codons =
 sequenceFeaturesVectors :: [(String, SequenceVertices)] -> [(String, [Float])]
 sequenceFeaturesVectors = map (Data.Bifunctor.second featuresVector)
 
-allSequenceVerts :: [Fasta.FastaSeq] -> Codons -> [(String, SequenceVertices)]
-allSequenceVerts fastas codons = map processFasta fastas
+allSequenceVerts :: [Fasta.FastaSeq] -> Codons.CodonsLookup -> [(String, SequenceVertices)]
+allSequenceVerts fastas codonsLookup = map processFasta fastas
     where
         processFasta :: Fasta.FastaSeq -> (String, SequenceVertices)
         processFasta fasta =
             (
                 B.unpack $ Fasta.fastaHeader fasta,
-                calculateSeqVertices (0, 0) (codonDirection codons) (B.unpack $ Fasta.fastaSeq fasta)
+                calculateSeqVertices (0, 0) (join . flip HM.lookup codonsLookup) (B.unpack $ Fasta.fastaSeq fasta)
             )
 
 calculateSeqVertices :: Vec2 -> (String -> Maybe Vec2) -> String -> SequenceVertices
@@ -44,3 +45,5 @@ calculateSeqVertices origin codonDirFn seq =
                     then calculateSeqVertices origin codonDirFn xs
                     else origin : calculateSeqVertices (addVec2 origin (fromJust codonDir)) codonDirFn xs
         _ -> [origin]
+
+        -- Remove the explicit recursion and evaluate it strictly not to store large thunks in memory

@@ -5,7 +5,6 @@ import System.Directory (getDirectoryContents, doesDirectoryExist)
 import System.IO
 import qualified Data.ByteString.Char8 as B
 import Data.List (isSuffixOf)
-import Data.List.Split (splitOn)
 import Control.Monad (join)
 import System.FilePath (combine)
 
@@ -28,9 +27,9 @@ main = do
     codons <- Codons.parseCodons $ CmdLine.cmdCodonsFile args
     sequences <- allSequences args
     let distances = BioSequences.sequencesDistances Metrics.euclideanDistance <$> sequences <*> codons
-    writeFile "result.tsv" $ fromJust $ TsvSerializer.serializeTsv <$> distances
+    writeFile (CmdLine.cmdResultFile args) $ fromJust $ TsvSerializer.serializeTsv <$> distances
     --
-    putStrLn $ "Sequences count = " ++ show (length sequences)
+    putStrLn $ "Sequences count = " ++ show (maybe 0 length sequences)
     putStrLn $ "Resulting distances count = " ++ show (maybe 0 length distances)
     putStrLn "Finished"
 

@@ -30,4 +30,5 @@ executable bachelor-thesis
         attoparsec -any,
         split -any,
         filepath -any,
-        cmdargs -any
+        cmdargs -any,
+        unordered-containers -any

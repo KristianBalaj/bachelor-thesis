@@ -22,8 +22,8 @@ yPosStd :: [Vec2] -> Float
 yPosStd = Math.std snd
 
 yPosMax :: [Vec2] -> Float
-yPosMax lst = foldl (\b (x, y) -> max y b) (snd $ head lst) lst
+yPosMax lst = foldl (\b (_, y) -> max y b) (snd $ head lst) lst
 
 yPosMin :: [Vec2] -> Float
-yPosMin lst = foldl (\b (x, y) -> min y b) (snd $ head lst) lst
+yPosMin lst = foldl (\b (_, y) -> min y b) (snd $ head lst) lst
 

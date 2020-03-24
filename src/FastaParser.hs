@@ -22,9 +22,9 @@ header :: Parser B.ByteString
 header = do
     _ <- recordStart
     _ <- A.takeWhile isSpace
-    header <- word
+    hdr <- word
     _ <- A.takeWhile isSpace
-    return header
+    return hdr
 
 fastaSequence :: Parser [B.ByteString]
 fastaSequence = A.takeWhile (\c -> not (isSpace c) && not (fastaSeqStart c)) `A.sepBy1` satisfy isSpace
@@ -32,8 +32,8 @@ fastaSequence = A.takeWhile (\c -> not (isSpace c) && not (fastaSeqStart c)) `A.
 singleFastaSeq :: Parser FastaSeq
 singleFastaSeq = do
     hdr <- header
-    seq <- B.concat <$> fastaSequence
-    return (FastaSeq hdr seq)
+    fSeq <- B.concat <$> fastaSequence
+    return (FastaSeq hdr fSeq)
 
 fasta :: Parser [FastaSeq]
 fasta = do

@@ -4,8 +4,6 @@
 module CmdLine (getCmd, Cmd(..)) where
 
 import System.Console.CmdArgs.Implicit
-import Data.Typeable
-import Data.Data
 
 getCmd :: IO Cmd
 getCmd = cmdArgs mode >>= processCmd
