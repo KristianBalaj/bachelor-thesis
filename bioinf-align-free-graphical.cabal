@@ -1,12 +1,12 @@
 cabal-version: >=1.10
-name: bachelor-thesis
+name: bioinf-align-free-graphical 
 version: 0.1.0.0
 build-type: Simple
 extra-source-files:
     CHANGELOG.md
     README.md
 
-executable bachelor-thesis
+executable bioinf-align-free-graphical 
     main-is: Main.hs
     hs-source-dirs: src
     other-modules:

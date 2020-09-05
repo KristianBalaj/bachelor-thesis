@@ -4,7 +4,7 @@ cradle:
         config:
           cradle:
             cabal:
-              component: "exe:bachelor-thesis"
+              component: "exe:bioinf-align-free-graphical"
       - path: ./Setup.hs
         config:
           cradle:
