@@ -47,7 +47,7 @@ codonLookup codons =
                             ratio = fromIntegral index / fromIntegral anglesCount
                             angle = pi / 2 - ratio * pi   -- going from pi/2 down 
                         in
-                            Just (cos angle, sin angle)
+                            Just (Vec2 (cos angle) (sin angle))
 
 orderedCodons :: Codons -> [String]
 orderedCodons codons = 

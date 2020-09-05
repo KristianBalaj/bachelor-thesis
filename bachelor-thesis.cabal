@@ -20,7 +20,7 @@ executable bachelor-thesis
         TsvSerializer
         CmdLine
     default-language: Haskell2010
-    ghc-options: -rtsopts
+    ghc-options: -rtsopts -fprof-auto -fprof-cafs
     build-depends:
         base >=4.12 && <4.13,
         aeson -any,

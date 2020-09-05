@@ -2,6 +2,8 @@ module Descriptors (
     featuresVector
 ) where
 
+import Data.List
+
 import Vec2
 import qualified Math
 
@@ -16,14 +18,14 @@ featuresVector vertices =
     
 -- TODO: float instability issues?
 normalizedLength :: [Vec2] -> Float
-normalizedLength a = fst (last a) / fromIntegral (length a)
+normalizedLength a = Vec2.vecX (last a) / fromIntegral (length a)
 
 yPosStd :: [Vec2] -> Float
-yPosStd = Math.std snd
+yPosStd = Math.std Vec2.vecY
 
 yPosMax :: [Vec2] -> Float
-yPosMax lst = foldl (\b (_, y) -> max y b) (snd $ head lst) lst
+yPosMax = foldl' (\b (Vec2 _ y) -> max y b) 0
 
 yPosMin :: [Vec2] -> Float
-yPosMin lst = foldl (\b (_, y) -> min y b) (snd $ head lst) lst
+yPosMin = foldl' (\b (Vec2 _ y) -> min y b) 0
 

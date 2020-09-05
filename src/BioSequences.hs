@@ -5,6 +5,8 @@ import Control.Monad (filterM, join)
 import qualified Data.Bifunctor (second)
 import qualified Data.ByteString.Char8 as B
 import qualified Data.HashMap.Strict as HM
+import Data.List
+import Data.List.Split
 
 import qualified FastaParser as Fasta
 import Metrics (Metric)
@@ -34,7 +36,7 @@ allSequenceVerts fastas codonsLookup = map processFasta fastas
         processFasta fasta =
             (
                 B.unpack $ Fasta.fastaHeader fasta,
-                calculateSeqVertices (0, 0) (join . flip HM.lookup codonsLookup) (B.unpack $ Fasta.fastaSeq fasta)
+                calculateSeqVertices (Vec2 0 0) (join . flip HM.lookup codonsLookup) (B.unpack $ Fasta.fastaSeq fasta)
             )
 
 calculateSeqVertices :: Vec2 -> (String -> Maybe Vec2) -> String -> SequenceVertices

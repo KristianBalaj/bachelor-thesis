@@ -3,7 +3,9 @@ module Main where
 import Data.Maybe (fromJust, maybe)
 import System.Directory (getDirectoryContents, doesDirectoryExist)
 import System.IO
-import qualified Data.ByteString.Char8 as B
+import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString.Char8 as BS
+
 import Data.List (isSuffixOf)
 import Control.Monad (join)
 import System.FilePath (combine)
@@ -23,12 +25,10 @@ main = do
     putStrLn $ "Result file: \"" ++ CmdLine.cmdResultFile args ++ "\""
     putStrLn $ "Sequence file endings: " ++ show (CmdLine.cmdSequenceFileEndings args)
     putStrLn "Processing..."
-    --
     codons <- Codons.parseCodons $ CmdLine.cmdCodonsFile args
     sequences <- allSequences args
     let distances = BioSequences.sequencesDistances Metrics.euclideanDistance <$> sequences <*> codons
     writeFile (CmdLine.cmdResultFile args) $ fromJust $ TsvSerializer.serializeTsv <$> distances
-    --
     putStrLn $ "Sequences count = " ++ show (maybe 0 length sequences)
     putStrLn $ "Resulting distances count = " ++ show (maybe 0 length distances)
     putStrLn "Finished"
